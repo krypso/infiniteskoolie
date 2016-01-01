@@ -5,7 +5,7 @@ void setup() {
   int maxHeight = 480;
   int framerate = 60;
 
-  size(maxWidth,maxHeight);
+  size(800,480);
   frameRate(framerate);
   smooth(5);
 
