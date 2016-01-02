@@ -41,7 +41,6 @@ void draw() {
   
   if (fadeCount>=1) fadeCount = 0;
   testBubble.setFade(fadeCount);
-  //println(fadeCount);
   fadeCount+=.01;
   
   
@@ -55,9 +54,16 @@ void draw() {
 
 void mousePressed() {
   
-  testBubble.isPressed();
-  testBubble2.isPressed();
+  testBubble.isClicked();
+  testBubble2.isClicked();
   
+  
+}
+
+void mouseReleased() {
+  
+  testBubble.faderRelease();
+  testBubble2.faderRelease();
   
 }
 
@@ -70,10 +76,12 @@ class Touchbubble {
   
   int xPos = 0;
   int yPos = 0;
-  float xFader;
-  float yFader;
   int innerDiameter = 60;
   int outerDiameter = 75;
+  
+  float xFader;
+  float yFader;
+  int faderDiameter = 25;
   
   int innerColor = gray;
   
@@ -84,36 +92,39 @@ class Touchbubble {
   
   int gradientNow = 0; // handles the start gradient after pulse calculation
   int gradientPulseHop = 5;
-  int gradientPulseDelay = 30; // in frames
+  int gradientPulseDelay = 10; // in frames
   int gradientPulseFrame = 0;
   
   float fadePercent = .5; // if state = 2, fade percentage from 0 to 1
   float fadeAngle;
+  
+  boolean overFader = false;  // is the cursor over the fader?
+  boolean faderLocked = false; // is the fader locked to a finger for scrolling?
   
   
   Touchbubble(int State, int x, int y) {
     setState(State);
     setCoords(x,y);
     
-    setFade(0.5);
+    setFade(0);
   }
   
   // Draw the touch bubble
   void display() {
     
-    //Draw Outer Glow Gradient
+    // Check if the fader is being pressed before we draw anything
+    faderPress();
+    if (faderLocked) { xFader = mouseX; yFader = mouseY; }
+    
+    // Draw Outer Glow Gradient
     int edgeOpacity = gradientStop;
     int currentOpacity = edgeOpacity;
     int currentDiameter = innerDiameter+gradientSize;
-    
     int gradientHop = (gradientNow-gradientStop)/gradientSize;
     
-    noStroke();
+    noStroke();  // disable stroke on the gradient lines
     for (int x=0;x<gradientSize;x++) {
-      if (state == 0) fill(currentOpacity,0,0,255);
-      else if (state == 1) fill(0,currentOpacity,0);
-      else if (state == 2) fill(0,0,currentOpacity);
-      //fill(currentOpacity,0,0,255);
+      stateFill(currentOpacity);
       ellipse(xPos,yPos,currentDiameter,currentDiameter);
       
       currentOpacity += gradientHop;
@@ -121,8 +132,7 @@ class Touchbubble {
     }
     
     // Handle Gradient Pulsing
-    if (gradientPulseFrame >= gradientPulseDelay) {
-      //println("NOW: " + gradientNow + " Start: " + gradientStart + " State: " + gradientState + " Stop: " + gradientStop);
+    if (gradientPulseFrame >= gradientPulseDelay) {  // delay the next pulse
       if (gradientNow >= gradientStart) { gradientState = 0;}
       else if (gradientNow <= gradientStop) { gradientState = 1; gradientPulseFrame = 0;}
       
@@ -134,23 +144,20 @@ class Touchbubble {
     // Draw the percentage draggy line thing
     stroke(255,150);
     strokeWeight(2);
-    //line(xPos, yPos, xPos + outerDiameter/2 + 25, yPos);
     line(xPos,yPos,xFader,yFader);
     
     // Draw the drag bubble
-    if (state == 0) fill(gradientNow,0,0,255);
-    else if (state == 1) fill(0,gradientNow,0);
-    else if (state == 2) fill(0,0,gradientNow);
-    ellipse(xFader, yFader,15,15);
+    stateFill(gradientNow);
+    ellipse(xFader, yFader,faderDiameter,faderDiameter);
     
-    //Inner Bubble
+    // Inner Bubble
     fill(innerColor,255);
     stroke(0,150);
     strokeWeight(1);
     ellipse(xPos,yPos,60,60);
   }
   
-  void isPressed() {
+  void isClicked() {
     
     // If mouse is pressed on this bubble, change the state
     if (overBubble()) {
@@ -165,6 +172,13 @@ class Touchbubble {
     float disY = yPos - mouseY;
     if (sqrt(sq(disX) + sq(disY)) < innerDiameter/2 ) return true;
     else return false; //<>//
+  }
+  
+  boolean overCircle(int xC, int yC, int diameter) {
+    float disX = xC - mouseX;
+    float disY = yC - mouseY;
+    if (sqrt(sq(disX) + sq(disY)) < diameter/2 ) return true;
+    else return false;
   }
   
   int getState() { return state; }
@@ -197,5 +211,28 @@ class Touchbubble {
     
   }
   
-  void pressEvent() { println("HELLO WORLD"); }
+  void faderPress() {
+    
+    // Is the cursor over the fader?
+    if (overCircle((int)xFader,(int)yFader,faderDiameter)) overFader = true;
+    else overFader = false;
+    
+    // If we are actively dragging this fader
+    if (overFader && mousePressed || faderLocked) {
+      faderLocked = true;
+    }
+    else faderLocked = false;
+  }
+  
+  void faderRelease() { faderLocked = false; }
+  
+  // Set the fill for a certain color depending on current state
+  void stateFill(int level) {
+    switch(state) {
+      case 0: fill(level,0,0,255); break;  // red
+      case 1: fill(0,level,0,255); break;  // green
+      case 2: fill(0,0,level,255); break;  // blue
+      default: fill(0,0,0,255); break;     // black
+    }
+  }
 }
