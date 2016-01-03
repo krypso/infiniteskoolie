@@ -23,7 +23,9 @@ void setup() {
   smooth(10);
   
   testBubble = new Touchbubble(0,200,200);
-  testBubble2 = new Touchbubble(0,200,400);
+  //testBubble2 = new Touchbubble(0,200,400);
+  
+  testBubble.open();
   
 }
 
@@ -37,25 +39,18 @@ void draw() {
   background(background);
   
   testBubble.display();
-  testBubble2.display();
+  //testBubble2.display();
   
-  if (fadeCount>=1) fadeCount = 0;
-  testBubble.setFade(fadeCount);
-  fadeCount+=.01;
-  
-  
-  // Draw test slider
-  rect(700,50,75,350);
-  fill(0,255);
-  rect(700,50,75,fadeCount*(100*3.5));
-  
+  //if (fadeCount>=1) fadeCount = 0;
+  //testBubble.setFade(fadeCount);
+  //fadeCount+=.01;
   
 }
 
 void mousePressed() {
   
   testBubble.isClicked();
-  testBubble2.isClicked();
+  //testBubble2.isClicked();
   
   
 }
@@ -63,7 +58,7 @@ void mousePressed() {
 void mouseReleased() {
   
   testBubble.faderRelease();
-  testBubble2.faderRelease();
+  //testBubble2.faderRelease();
   
 }
 
@@ -72,12 +67,13 @@ void mouseReleased() {
 
 class Touchbubble {
   
-  int state = 0;
+  int state = 0; // 0=off,1=on,2=fader
+  int openState = 0; // 0=closed,1=opening,2=open,3=closing
   
   int xPos = 0;
   int yPos = 0;
   int innerDiameter = 60;
-  int outerDiameter = 75;
+  int currentDiameter = 0; // for opening and closing the bubble
   
   float xFader;
   float yFader;
@@ -94,12 +90,17 @@ class Touchbubble {
   int gradientPulseHop = 5;
   int gradientPulseDelay = 10; // in frames
   int gradientPulseFrame = 0;
+  boolean allowPulse = false;
   
   float fadePercent = .5; // if state = 2, fade percentage from 0 to 1
   float fadeAngle;
+  int faderMultiplier;  // used to resize fader bubble
   
   boolean overFader = false;  // is the cursor over the fader?
   boolean faderLocked = false; // is the fader locked to a finger for scrolling?
+  
+  boolean closeTrigger = false;
+  int closeCount = 0;
   
   
   Touchbubble(int State, int x, int y) {
@@ -109,56 +110,81 @@ class Touchbubble {
     setFade(0);
   }
   
+  void open() { openState = 1; closeTrigger = false; closeCount = 0; }
+  void close() { if (openState == 2) openState = 3; }
+  
   // Draw the touch bubble
   void display() {
-    
-    // Check if the fader is being pressed before we draw anything
-    faderPress();
-    if (faderLocked) { xFader = mouseX; yFader = mouseY; }
+    if (openState == 0) return;  // bubble not active
     
     // Draw Outer Glow Gradient
-    int edgeOpacity = gradientStop;
-    int currentOpacity = edgeOpacity;
-    int currentDiameter = innerDiameter+gradientSize;
-    int gradientHop = (gradientNow-gradientStop)/gradientSize;
-    
-    noStroke();  // disable stroke on the gradient lines
-    for (int x=0;x<gradientSize;x++) {
-      stateFill(currentOpacity);
-      ellipse(xPos,yPos,currentDiameter,currentDiameter);
+    if (openState == 2) { // only if in state 2 of open
+      int edgeOpacity = gradientStop;
+      int currentOpacity = edgeOpacity;
+      int currentDiameter = innerDiameter+gradientSize;
+      int gradientHop = (gradientNow-gradientStop)/gradientSize;
       
-      currentOpacity += gradientHop;
-      currentDiameter --;
-    }
+      noStroke();  // disable stroke on the gradient lines
+      for (int x=0;x<gradientSize;x++) {
+        stateFill(currentOpacity);
+        ellipse(xPos,yPos,currentDiameter,currentDiameter);
+        currentOpacity += gradientHop;
+        currentDiameter --;
+      }
     
-    // Handle Gradient Pulsing
-    if (gradientPulseFrame >= gradientPulseDelay) {  // delay the next pulse
-      if (gradientNow >= gradientStart) { gradientState = 0;}
-      else if (gradientNow <= gradientStop) { gradientState = 1; gradientPulseFrame = 0;}
-      
-      if (gradientState==1) gradientNow = gradientNow + 50;
-      else gradientNow = gradientNow - 10;
+      // Handle Gradient Pulsing
+      if (gradientPulseFrame >= gradientPulseDelay) {  // delay the next pulse
+        if (gradientNow >= gradientStart) { gradientState = 0;}
+        else if (gradientNow <= gradientStop) { gradientState = 1; gradientPulseFrame = 0;}
+        if (gradientState==1) gradientNow = gradientNow + 50;
+        else gradientNow = gradientNow - 10;
+      } else { gradientPulseFrame++; }
     }
-    else gradientPulseFrame++;
     
     // Draw the percentage draggy line thing
-    stroke(255,150);
-    strokeWeight(2);
-    line(xPos,yPos,xFader,yFader);
-    
-    // Draw the drag bubble
-    stateFill(gradientNow);
-    ellipse(xFader, yFader,faderDiameter,faderDiameter);
+    if (openState == 2) {
+      stroke(255,150);
+      strokeWeight(2);
+      line(xPos,yPos,xFader,yFader);
+      
+      // Check if the fader is being pressed before we draw anything
+      faderPress();
+      if (faderLocked) { xFader = mouseX; yFader = mouseY; }
+      
+      // Draw the drag bubble
+      stateFill(gradientNow);
+      if (faderLocked) faderMultiplier = 2;
+      else faderMultiplier = 1;
+      ellipse(xFader, yFader,faderDiameter*faderMultiplier,faderDiameter*faderMultiplier);
+    }
     
     // Inner Bubble
     fill(innerColor,255);
     stroke(0,150);
     strokeWeight(1);
-    ellipse(xPos,yPos,60,60);
+    ellipse(xPos,yPos,currentDiameter,currentDiameter);
+    
+    // Make the bubble open look more smooth
+    if (openState == 1 && currentDiameter < (innerDiameter*.20)) currentDiameter+=2;
+    else if (openState == 1 && currentDiameter < (innerDiameter*.5)) currentDiameter+=8;
+    else if (openState == 1 && currentDiameter < (innerDiameter*.75)) currentDiameter+=4;
+    else if (openState == 1 && currentDiameter < innerDiameter) currentDiameter+=2;
+    else if (openState == 1 && currentDiameter >= innerDiameter) { openState = 2; }
+    
+    // If fader is locked, shrink middle to 90% //<>//
+    if (openState == 2 && faderLocked) currentDiameter = (int)(.9 * innerDiameter);
+    else if (openState == 2 && !faderLocked) currentDiameter = innerDiameter;
+    
+    // If closing bubble, make it quick
+    if (openState == 3 && closeCount == framerate) openState = 0;
+    else if (openState == 3 && closeCount < framerate) {
+      currentDiameter = innerDiameter - closeCount*(innerDiameter/framerate);
+      closeCount++;
+    }
+    
   }
   
   void isClicked() {
-    
     // If mouse is pressed on this bubble, change the state
     if (overBubble()) {
       if (state == 0) setState(1);
@@ -185,8 +211,6 @@ class Touchbubble {
   
   void setState(int State) {
     state = State;
-    
-    println(state);
     
     switch(state) {
       case 0: innerColor = red; break;
@@ -220,11 +244,35 @@ class Touchbubble {
     // If we are actively dragging this fader
     if (overFader && mousePressed || faderLocked) {
       faderLocked = true;
+      setState(2);
+      
+      // Calculate Angle
+      
+      // Draw angle value over finger
+      textSize(15);
+      fill(255,255,255);
+      textAlign(CENTER,BOTTOM);
+      text("Angle Value", xFader, yFader-25); 
+      
     }
     else faderLocked = false;
   }
   
-  void faderRelease() { faderLocked = false; }
+  void faderRelease() {
+    // Unlock the fader from cursor
+    faderLocked = false;
+    
+    // Trigger bubble close
+    close();
+    
+    // Calculate angle to send
+    /* TO DO */
+  }
+  
+  float getAngle(int x1, int y1, int x2, int y2) {
+    //PVector v1 = new PVector(
+    return 0.0;
+  }
   
   // Set the fill for a certain color depending on current state
   void stateFill(int level) {
