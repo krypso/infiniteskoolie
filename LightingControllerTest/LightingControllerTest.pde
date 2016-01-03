@@ -4,12 +4,14 @@ Serial myPort;  // Create object from Serial class
 int backgroundColor = 0;
 byte fadeLevel = 0x00;
 boolean increase = true;
+int lastSend = 0;
 
 void setup() 
 {
   size(200, 200);
   String portName = Serial.list()[3];
   myPort = new Serial(this, portName, 9600);
+  frameRate(240);
 }
 
 void draw() {
@@ -20,9 +22,10 @@ void draw() {
   
   background(backgroundColor);
   
-  sendFade(byte(int(((float)backgroundColor/255)*100)));
-  
-  delay(5);
+  if (abs(lastSend-backgroundColor)>1) {
+    sendFade(byte(int(((float)backgroundColor/255)*100)));
+    lastSend = backgroundColor;
+  }
 }
 
 void sendFade(byte v) {
