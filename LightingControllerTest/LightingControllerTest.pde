@@ -13,9 +13,16 @@ void setup()
 }
 
 void draw() {
+  if (increase && backgroundColor<255) backgroundColor++;
+  else if (backgroundColor >= 255){ increase = false; backgroundColor--; }
+  else if (!increase && backgroundColor>0) backgroundColor--;
+  else if (!increase && backgroundColor<=0) { increase = true; backgroundColor++; }
+  
   background(backgroundColor);
-  if (direction)
-  delay(100);
+  
+  sendFade(byte(int(((float)backgroundColor/255)*100)));
+  
+  delay(5);
 }
 
 void sendFade(byte v) {
