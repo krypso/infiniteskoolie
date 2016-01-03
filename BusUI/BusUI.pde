@@ -55,36 +55,8 @@ void setup() {
 void draw() { 
   background(#000000);
   line(400, 20, 400, 460);
-
-  stroke(#FFFFFF);
-  fill(engineButtonColor);
-  rect(engineButtonX, engineButtonY, buttonWidth, buttonHeight);
-
-  stroke(#FFFFFF);
-  fill(tireButtonColor);
-  rect(tireButtonX, tireButtonY, buttonWidth, buttonHeight);
-
-  /* Right Buttons */
-
-  stroke(#FFFFFF);
-  fill(lightButtonColor);
-  rect(lightButtonX, lightButtonY, buttonWidth, buttonHeight);
-
-  stroke(#FFFFFF);
-  fill(audioButtonColor);
-  rect(audioButtonX, audioButtonY, buttonWidth, buttonHeight);
-
-  pushMatrix();
-  fill(#000000);
-  translate(width/2, height/2);
-  rotate(radians(270));
-  text("Engine", engineButtonY + 180, engineButtonX - 380);
-  text("Tires", tireButtonY + 30, tireButtonX - 380);
-
-  text("Lights", lightButtonY + 180, lightButtonX - 375);
-  text("Audio", audioButtonY + 25, audioButtonX - 375);
-  popMatrix();
   
+  drawMainTabs();
   drawDasBus();
   
   if (lightButtonOn) drawLights();
@@ -157,6 +129,37 @@ boolean overRect(int x, int y, int width, int height) {
   } else {
     return false;
   }
+}
+
+void drawMainTabs() {
+  stroke(#FFFFFF);
+  fill(engineButtonColor);
+  rect(engineButtonX, engineButtonY, buttonWidth, buttonHeight);
+
+  stroke(#FFFFFF);
+  fill(tireButtonColor);
+  rect(tireButtonX, tireButtonY, buttonWidth, buttonHeight);
+
+  /* Right Buttons */
+
+  stroke(#FFFFFF);
+  fill(lightButtonColor);
+  rect(lightButtonX, lightButtonY, buttonWidth, buttonHeight);
+
+  stroke(#FFFFFF);
+  fill(audioButtonColor);
+  rect(audioButtonX, audioButtonY, buttonWidth, buttonHeight);
+
+  pushMatrix();
+  fill(#000000);
+  translate(width/2, height/2);
+  rotate(radians(270));
+  text("Engine", engineButtonY + 180, engineButtonX - 380);
+  text("Tires", tireButtonY + 30, tireButtonX - 380);
+
+  text("Lights", lightButtonY + 180, lightButtonX - 375);
+  text("Audio", audioButtonY + 25, audioButtonX - 375);
+  popMatrix(); 
 }
 
 void drawDasBus() {
