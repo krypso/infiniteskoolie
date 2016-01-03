@@ -34,6 +34,7 @@ void BusNet::parse() {
   // Check if this message is meant for us
   if (this->device_id == this->receiver_id) {
     
+    // range from 0 to 64
     this->newDuty = ((float)this->serialCache[2]) / 100;
     if (this->newDuty > 1) this->newDuty = 1;
     else if (this->newDuty < 0) this->newDuty = 0;

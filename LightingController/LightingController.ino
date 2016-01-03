@@ -22,17 +22,21 @@ void setup() {
 
 void loop() {
   
-  currentMicros = micros();  // TODO: we will need to handle overflows eventually
-  if (currentMicros > cycleStop) {
-    // reset variables
-    cycleStart = currentMicros;
-    cycleTrigger = currentMicros + (dutyCycle*cycleLength);
-    cycleStop = currentMicros+cycleLength;
-    digitalWrite(13,HIGH);
-  }
+  if (dutyCycle == 1) digitalWrite(13,HIGH);
+  else if (dutyCycle == 0) digitalWrite(13,LOW);
   else {
-    if (currentMicros < cycleTrigger) digitalWrite(13,HIGH);
-    else digitalWrite(13,LOW);
+    currentMicros = micros();  // TODO: we will need to handle overflows eventually
+    if (currentMicros > cycleStop) {
+      // reset variables
+      cycleStart = currentMicros;
+      cycleTrigger = currentMicros + (dutyCycle*cycleLength);
+      cycleStop = currentMicros+cycleLength;
+      digitalWrite(13,HIGH);
+    }
+    else {
+      if (currentMicros < cycleTrigger) digitalWrite(13,HIGH);
+      else digitalWrite(13,LOW);
+    }
   }
 }
 
